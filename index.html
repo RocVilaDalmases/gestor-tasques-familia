@@ -125,7 +125,8 @@
     }
     .user-switcher label { color: var(--muted); font-size: .78rem; font-weight: 700; }
     .user-switcher select {
-      max-width: 125px;
+      min-width: 120px;
+      max-width: 180px;
       border: 0;
       color: var(--text);
       background: transparent;
@@ -617,6 +618,11 @@
 
       <div class="top-actions">
         <span class="connection-badge" id="connectionBadge" data-state="online">Connectat</span>
+        <div class="user-switcher">
+          <label for="familySelect">Grup</label>
+          <select id="familySelect" aria-label="Seleccionar el grup actiu"></select>
+        </div>
+        <button class="icon-btn" id="createGroupBtn" type="button" aria-label="Crear un grup" title="Crear un grup">⊕</button>
         <button class="profile-chip" id="profileButton" type="button" aria-label="Editar el perfil">
           <span class="avatar" id="profileButtonAvatar">?</span>
           <strong id="profileButtonName">Usuari</strong>
@@ -755,7 +761,7 @@
                   <span>🌐 Pública</span>
                 </label>
               </div>
-              <p class="hint">Privada: creador i persones assignades. Pública: tota la família.</p>
+              <p class="hint">Privada: creador i persones assignades. Pública: tot el grup.</p>
             </div>
 
             <div class="field">
@@ -847,7 +853,7 @@
   <div class="modal-backdrop" id="membersModal" role="dialog" aria-modal="true" aria-labelledby="membersTitle">
     <div class="modal">
       <div class="modal-head">
-        <div><h3 id="membersTitle">Membres de la família</h3><p>Els membres convidats s’afegiran quan es registrin amb el correu indicat.</p></div>
+        <div><h3 id="membersTitle">Membres del grup</h3><p>Els membres convidats s’afegiran a aquest grup quan es registrin amb el correu indicat.</p></div>
         <button class="icon-btn" id="closeMembersModal" type="button" aria-label="Tancar">×</button>
       </div>
       <div class="member-list" id="memberList"></div>
@@ -860,9 +866,27 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="createGroupModal" role="dialog" aria-modal="true" aria-labelledby="createGroupTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div><h3 id="createGroupTitle">Crea un grup nou</h3><p>Les tasques i els membres quedaran separats dels altres grups.</p></div>
+        <button class="icon-btn" id="closeCreateGroupModal" type="button" aria-label="Tancar">×</button>
+      </div>
+      <form class="form-grid" id="createGroupForm">
+        <div class="field"><label for="newGroupName">Nom del grup</label><input id="newGroupName" type="text" maxlength="80" placeholder="Ex.: Roc i Queralt" required /></div>
+        <h4 style="margin:8px 0 0">Primer membre opcional</h4>
+        <p class="hint">Pots convidar una persona ara i afegir-ne més després des de “Gestionar membres”.</p>
+        <div class="field"><label for="newGroupMemberName">Nom</label><input id="newGroupMemberName" type="text" maxlength="50" placeholder="Ex.: Queralt" /></div>
+        <div class="field"><label for="newGroupMemberEmail">Correu del compte</label><input id="newGroupMemberEmail" type="email" maxlength="160" placeholder="persona@exemple.cat" /></div>
+        <div class="field"><label for="newGroupMemberColor">Color</label><input id="newGroupMemberColor" type="color" value="#5b67f1" /></div>
+        <div class="modal-actions"><button class="secondary-btn" id="cancelCreateGroup" type="button">Cancel·la</button><button class="primary-btn" type="submit">Crea el grup</button></div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
     <div class="modal">
-      <div class="modal-head"><div><h3 id="profileTitle">El meu perfil</h3><p>El nom, color i foto es mostraran a la família.</p></div><button class="icon-btn" id="closeProfileModal" type="button" aria-label="Tancar">×</button></div>
+      <div class="modal-head"><div><h3 id="profileTitle">El meu perfil</h3><p>El nom, color i foto es mostraran als grups on participis.</p></div><button class="icon-btn" id="closeProfileModal" type="button" aria-label="Tancar">×</button></div>
       <form class="form-grid" id="profileForm">
         <div class="profile-avatar-editor">
           <img id="profileAvatarPreview" alt="Previsualització de la foto" hidden />
@@ -881,7 +905,7 @@
 (() => {
   "use strict";
 
-  const APP_VERSION = "4.0.0";
+  const APP_VERSION = "4.1.0";
   const EMBEDDED_CONFIG = Object.freeze({
     supabaseUrl: "https://tvjvbsifnbuqieddvpdw.supabase.co",
     supabaseKey: "sb_publishable_Q7BJU149-G-PTpNlYb1oEg_vp1cZqGN"
@@ -901,6 +925,7 @@
     profile: null,
     familyId: null,
     family: null,
+    families: [],
     memberships: [],
     members: [],
     invites: [],
@@ -924,13 +949,14 @@
     "loadingScreen","loadingText","setupScreen","setupForm","setupUrl","setupKey","setupMessage",
     "authScreen","authLoginTab","authRegisterTab","authForm","authNameField","authName","authEmail","authPassword","authSubmit","authMessage",
     "noFamilyScreen","createFamilyForm","familyName","ownerName","ownerColor","inviteMarEmail","inviteRicardEmail","inviteLourdesEmail","noFamilyMessage","noFamilyLogout",
-    "appMain","profileButton","profileButtonAvatar","profileButtonName","logoutBtn","manageMembersBtn","themeToggle","focusAdd","mobileAdd",
+    "appMain","familySelect","createGroupBtn","profileButton","profileButtonAvatar","profileButtonName","logoutBtn","manageMembersBtn","themeToggle","focusAdd","mobileAdd",
     "taskForm","taskTitle","taskDescription","taskCategory","taskPriority","taskStatus","taskDueDate","newTaskAssignees","newAssigneeError",
     "taskList","emptyState","summaryText","searchInput","sortSelect","viewListBtn","viewCalendarBtn","listView","calendarView","calendarGrid","calendarMonthLabel","calendarUnscheduled","calendarPrev","calendarToday","calendarNext","clearCompletedTop",
     "progressPercent","progressBar","totalStat","pendingStat","completedStat","exportBtn","importBtn","importFile","deleteAllBtn","toast",
     "detailModal","detailTitle","detailSubtitle","detailContent","detailEditBtn","closeDetailModal",
     "editModal","editForm","editTaskTitle","editTaskDescription","editTaskCategory","editTaskPriority","editTaskStatus","editTaskDueDate","editTaskAssignees","editAssigneeError","closeEditModal","cancelEdit",
     "membersModal","memberList","memberForm","newMemberName","newMemberEmail","newMemberColor","closeMembersModal",
+    "createGroupModal","createGroupForm","newGroupName","newGroupMemberName","newGroupMemberEmail","newGroupMemberColor","closeCreateGroupModal","cancelCreateGroup",
     "profileModal","profileForm","profileName","profileColor","profileAvatarFile","profileAvatarPreview","profileEmail","closeProfileModal","cancelProfile","removeAvatarBtn",
     "themeColorMeta","addTaskCard","connectionBadge"
   ];
@@ -992,20 +1018,29 @@
         profile: profileMap.get(row.user_id) || { id: row.user_id, displayName: "Usuari", email: "", color: "#5b67f1", avatarPath: null }
       })).sort((a,b) => a.profile.displayName.localeCompare(b.profile.displayName, "ca"));
 
-      const [family, tasks, assignees, comments, checklistItems, invites] = await Promise.all([
+      const [family, taskRows, inviteRows] = await Promise.all([
         this.client.from("families").select("id,name,created_by,created_at,updated_at").eq("id", familyId).single().then(unwrap),
         this.client.from("tasks").select("*").eq("family_id", familyId).order("created_at", { ascending: false }).then(unwrap),
-        this.client.from("task_assignees").select("task_id,user_id,assigned_at").then(unwrap),
-        this.client.from("task_comments").select("*").order("created_at", { ascending: true }).then(unwrap),
-        this.client.from("task_checklist_items").select("*").order("position", { ascending: true }).then(unwrap),
         this.client.from("family_invites").select("*").eq("family_id", familyId).order("created_at", { ascending: true }).then(result => result.error ? [] : result.data)
       ]);
+
+      const taskIds = taskRows.map(row => row.id);
+      let assignees = [];
+      let comments = [];
+      let checklistItems = [];
+      if (taskIds.length) {
+        [assignees, comments, checklistItems] = await Promise.all([
+          this.client.from("task_assignees").select("task_id,user_id,assigned_at").in("task_id", taskIds).then(unwrap),
+          this.client.from("task_comments").select("*").in("task_id", taskIds).order("created_at", { ascending: true }).then(unwrap),
+          this.client.from("task_checklist_items").select("*").in("task_id", taskIds).order("position", { ascending: true }).then(unwrap)
+        ]);
+      }
 
       return {
         family,
         members,
-        invites: invites.map(mapInvite),
-        tasks: tasks.map(mapTask),
+        invites: inviteRows.map(mapInvite),
+        tasks: taskRows.map(mapTask),
         assignees: assignees.map(row => ({ taskId: row.task_id, userId: row.user_id, assignedAt: row.assigned_at })),
         comments: comments.map(mapComment),
         checklistItems: checklistItems.map(mapChecklistItem)
@@ -1178,6 +1213,7 @@
     const identity = await repository.loadIdentity(state.user.id);
     state.profile = identity.profile;
     state.memberships = identity.memberships;
+    state.families = [...identity.families].sort((a,b) => a.name.localeCompare(b.name, "ca"));
 
     if (!identity.memberships.length) {
       populateNoFamilyOwner();
@@ -1241,6 +1277,11 @@
     el.noFamilyLogout.addEventListener("click", () => runAsync(() => repository.signOut()));
     el.createFamilyForm.addEventListener("submit", handleCreateFamily);
     el.logoutBtn.addEventListener("click", () => runAsync(() => repository.signOut()));
+    el.familySelect.addEventListener("change", handleFamilyChange);
+    el.createGroupBtn.addEventListener("click", openCreateGroupModal);
+    el.createGroupForm.addEventListener("submit", handleCreateGroup);
+    el.closeCreateGroupModal.addEventListener("click", closeCreateGroupModal);
+    el.cancelCreateGroup.addEventListener("click", closeCreateGroupModal);
     el.profileButton.addEventListener("click", openProfileModal);
     el.profileForm.addEventListener("submit", saveProfile);
     el.removeAvatarBtn.addEventListener("click", () => {
@@ -1369,7 +1410,7 @@
     el.importFile.addEventListener("change", importDatabase);
     el.deleteAllBtn.addEventListener("click", deleteOwnTasks);
 
-    [el.detailModal, el.editModal, el.membersModal, el.profileModal].forEach(modal => modal.addEventListener("click", event => {
+    [el.detailModal, el.editModal, el.membersModal, el.createGroupModal, el.profileModal].forEach(modal => modal.addEventListener("click", event => {
       if (event.target === modal) hideModal(modal);
     }));
     document.addEventListener("keydown", event => { if (event.key === "Escape") closeAllModals(); });
@@ -1415,6 +1456,63 @@
       setNoFamilyMessage("Família creada.");
       await loadIdentityAndData();
     } catch (error) { setNoFamilyMessage(friendlyError(error), true); }
+  }
+
+  async function handleFamilyChange(event) {
+    const nextFamilyId = event.target.value;
+    const previousFamilyId = state.familyId;
+    if (!nextFamilyId || nextFamilyId === previousFamilyId) return;
+    await runAsync(async () => {
+      try {
+        await switchFamily(nextFamilyId);
+      } catch (error) {
+        el.familySelect.value = previousFamilyId || "";
+        throw error;
+      }
+    });
+  }
+
+  async function switchFamily(familyId) {
+    if (!state.memberships.some(row => row.family_id === familyId && row.active)) throw new Error("No tens accés a aquest grup.");
+    const previousFamilyId = state.familyId;
+    closeAllModals();
+    state.familyId = familyId;
+    localStorage.setItem(FAMILY_KEY, familyId);
+    try {
+      await reloadSnapshot();
+      subscribeRealtime();
+      renderAll();
+      showToast(`Grup actiu: ${state.family?.name || "grup"}`);
+    } catch (error) {
+      state.familyId = previousFamilyId;
+      if (previousFamilyId) localStorage.setItem(FAMILY_KEY, previousFamilyId);
+      renderAll();
+      throw error;
+    }
+  }
+
+  async function handleCreateGroup(event) {
+    event.preventDefault();
+    const name = el.newGroupName.value.trim();
+    const memberName = el.newGroupMemberName.value.trim();
+    const memberEmail = el.newGroupMemberEmail.value.trim();
+    if (!name) return showToast("Indica el nom del grup.", true);
+    if ((memberName && !memberEmail) || (!memberName && memberEmail)) return showToast("Per convidar una persona, indica el nom i el correu.", true);
+    await runAsync(async () => {
+      const invites = memberName && memberEmail ? [{ displayName: memberName, email: memberEmail, color: el.newGroupMemberColor.value }] : [];
+      const familyId = await repository.createFamily(name, {
+        id: state.user.id,
+        displayName: state.profile.displayName,
+        color: state.profile.color,
+        avatarPath: state.profile.avatarPath
+      }, invites);
+      localStorage.setItem(FAMILY_KEY, familyId);
+      closeCreateGroupModal();
+      el.createGroupForm.reset();
+      el.newGroupMemberColor.value = "#5b67f1";
+      await loadIdentityAndData();
+      showToast("Grup creat correctament");
+    });
   }
 
   async function handleCreateTask(event) {
@@ -1510,6 +1608,7 @@
 
   function renderAll() {
     renderHeaderProfile();
+    renderFamilySelector();
     renderAssigneeSelectors();
     renderTasks();
     renderStats();
@@ -1524,8 +1623,14 @@
     renderAvatar(el.profileButtonAvatar, profile, true);
   }
 
+  function renderFamilySelector() {
+    el.familySelect.innerHTML = state.families.map(family => `<option value="${escapeHTML(family.id)}" ${family.id === state.familyId ? "selected" : ""}>${escapeHTML(family.name)}</option>`).join("");
+    el.familySelect.disabled = state.families.length < 2;
+  }
+
   function renderAssigneeSelectors() {
-    const previousNew = selectedCheckboxValues(el.newTaskAssignees);
+    const validMemberIds = new Set(state.members.map(member => member.id));
+    const previousNew = selectedCheckboxValues(el.newTaskAssignees).filter(id => validMemberIds.has(id));
     const defaults = previousNew.length ? previousNew : [state.user.id];
     el.newTaskAssignees.innerHTML = memberCheckboxTemplate(state.members, defaults, "new_assignee");
     if (state.editingTaskId) {
@@ -1719,6 +1824,12 @@
   }
 
   function openMembersModal() { renderMembersModal(); showModal(el.membersModal); }
+  function openCreateGroupModal() {
+    el.createGroupForm.reset();
+    el.newGroupMemberColor.value = "#5b67f1";
+    showModal(el.createGroupModal);
+    setTimeout(() => el.newGroupName.focus(), 100);
+  }
   function renderMembersModal() {
     const pending = state.invites.filter(invite => !invite.acceptedAt);
     el.memberList.innerHTML = state.members.map(member => `<div class="member-row"><span class="avatar" style="--avatar-color:${escapeHTML(member.profile.color)}">${avatarInner(member.profile)}</span><div><strong>${escapeHTML(member.profile.displayName)}</strong><span>${escapeHTML(member.profile.email)} · ${member.role === "owner" ? "Propietari" : "Membre"}</span></div>${member.id === state.user.id ? `<span class="pill">Tu</span>` : ""}</div>`).join("") + pending.map(invite => `<div class="member-row pending-member"><span class="avatar" style="--avatar-color:${escapeHTML(invite.color)}">${escapeHTML(initials(invite.displayName))}</span><div><strong>${escapeHTML(invite.displayName)}</strong><span>${escapeHTML(invite.email)} · pendent de registre</span></div><span class="pill">Convidat</span></div>`).join("");
@@ -1842,11 +1953,19 @@
     return /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(config?.supabaseUrl || "") && typeof config?.supabaseKey === "string" && config.supabaseKey.length > 30 && !config.supabaseKey.includes("PASTE_");
   }
 
+  function familyCacheKey(familyId = state.familyId) { return familyId ? `${CACHE_KEY}:${familyId}` : CACHE_KEY; }
   function cacheSnapshot() {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ family:state.family, members:state.members, invites:state.invites, tasks:state.tasks, assignees:state.assignees, comments:state.comments, checklistItems:state.checklistItems })); } catch {}
+    try { localStorage.setItem(familyCacheKey(), JSON.stringify({ family:state.family, members:state.members, invites:state.invites, tasks:state.tasks, assignees:state.assignees, comments:state.comments, checklistItems:state.checklistItems })); } catch {}
   }
-  function loadCachedSnapshot() { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch { return null; } }
-  function clearAppData() { state.profile=null; state.familyId=null; state.family=null; state.members=[]; state.tasks=[]; state.assignees=[]; state.comments=[]; state.checklistItems=[]; if (state.realtimeChannel && state.client) state.client.removeChannel(state.realtimeChannel); state.realtimeChannel=null; }
+  function loadCachedSnapshot() {
+    try {
+      const scoped = JSON.parse(localStorage.getItem(familyCacheKey()) || "null");
+      if (scoped) return scoped;
+      const legacy = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      return legacy?.family?.id === state.familyId ? legacy : null;
+    } catch { return null; }
+  }
+  function clearAppData() { state.profile=null; state.familyId=null; state.family=null; state.families=[]; state.memberships=[]; state.members=[]; state.invites=[]; state.tasks=[]; state.assignees=[]; state.comments=[]; state.checklistItems=[]; if (state.realtimeChannel && state.client) state.client.removeChannel(state.realtimeChannel); state.realtimeChannel=null; }
 
   function mapProfile(row) { return { id:row.id, email:row.email, displayName:row.display_name, color:row.color, avatarPath:row.avatar_path, createdAt:row.created_at, updatedAt:row.updated_at }; }
   function mapTask(row) { return { id:row.id, familyId:row.family_id, creatorId:row.creator_id, title:row.title, description:row.description || "", category:row.category || "", priority:row.priority, dueDate:row.due_date || "", visibility:row.visibility, status:row.status, statusChangedBy:row.status_changed_by, statusChangedAt:row.status_changed_at, completedBy:row.completed_by, completedAt:row.completed_at, createdAt:row.created_at, updatedAt:row.updated_at }; }
@@ -1894,10 +2013,11 @@
   function closeDetailModal() { state.detailTaskId=null; hideModal(el.detailModal); }
   function closeEditModal() { state.editingTaskId=null; hideModal(el.editModal); }
   function closeMembersModal() { hideModal(el.membersModal); }
+  function closeCreateGroupModal() { hideModal(el.createGroupModal); }
   function closeProfileModal() { hideModal(el.profileModal); if (el.profileAvatarPreview.src.startsWith("blob:")) URL.revokeObjectURL(el.profileAvatarPreview.src); }
-  function closeAllModals() { closeDetailModal(); closeEditModal(); closeMembersModal(); closeProfileModal(); }
+  function closeAllModals() { closeDetailModal(); closeEditModal(); closeMembersModal(); closeCreateGroupModal(); closeProfileModal(); }
   function showModal(modal) { modal.classList.add("show"); document.body.style.overflow="hidden"; }
-  function hideModal(modal) { modal.classList.remove("show"); if (![el.detailModal,el.editModal,el.membersModal,el.profileModal].some(item => item.classList.contains("show"))) document.body.style.overflow=""; }
+  function hideModal(modal) { modal.classList.remove("show"); if (![el.detailModal,el.editModal,el.membersModal,el.createGroupModal,el.profileModal].some(item => item.classList.contains("show"))) document.body.style.overflow=""; }
   function focusAddForm() { el.addTaskCard.scrollIntoView({behavior:"smooth",block:"start"}); setTimeout(() => el.taskTitle.focus(),250); }
 
   let toastTimer;
